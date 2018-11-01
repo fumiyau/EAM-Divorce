@@ -1,0 +1,1248 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}/Users/fumiyau/Documents/GitHub/EAM-Divorce/Log/JSS_EAMDivorce31Oct2018.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}31 Oct 2018, 20:26:50
+{txt}
+{com}. set more off
+{txt}
+{com}. do "/Users/fumiyau/Documents/GitHub/EAM-Divorce/DoFiles/1.NFR-S01.do"
+{txt}
+{com}. cd "/Users/fumiyau/Desktop/"
+{res}/Users/fumiyau/Desktop
+{txt}
+{com}. use "SecondaryData/0400/0400.dta",clear
+{txt}
+{com}. 
+. /**********************************************************************/
+. /*  SECTION 1:Data construction NFRJ                    
+>     Notes: */
+. /**********************************************************************/
+. 
+. /*----------------------------------------------------*/
+.    /* [>   1.  Winnowing   <] */ 
+. /*----------------------------------------------------*/
+. drop NO
+{txt}
+{com}. gen id=_n
+{txt}
+{com}. gen survey = 2002
+{txt}
+{com}.  
+. /*----------------------------------------------------*/
+.    /* [>   2.  Marital status and spouses educational attainment   <] */ 
+. /*----------------------------------------------------*/
+. gen marriage = Q01
+{txt}
+{com}. drop if Q37==9
+{txt}(12 observations deleted)
+
+{com}. /*再婚の区別（1:初婚, 2:再婚, 8:非該当）*/
+. gen remarriage = Q18
+{txt}(2,942 missing values generated)
+
+{com}. gen sex = 2
+{txt}
+{com}. gen age = Q32A
+{txt}
+{com}. /*1番目の結婚：結婚時年齢・学歴（離死別は問2?問16では、死別、離別なさった夫との結婚について答える。（再婚経験のある場合は最後の夫について））*/
+. gen marage1 = Q02A 
+{txt}(148 missing values generated)
+
+{com}. replace marage1 = Q18_1A if remarriage ==1 
+{txt}(122 real changes made, 2 to missing)
+
+{com}. 
+. gen marspage1 = Q08A
+{txt}(146 missing values generated)
+
+{com}. replace marspage1 = .  if remarriage ==1 
+{txt}(133 real changes made, 133 to missing)
+
+{com}. 
+. gen spedu1 = Q16
+{txt}(124 missing values generated)
+
+{com}. replace spedu1 = Q19_3 if remarriage ==1 
+{txt}(68 real changes made)
+
+{com}. recode spedu1 9=.
+{txt}(spedu1: 20 changes made)
+
+{com}. 
+. /*2番目の相手の情報*/
+. gen spedu2 = Q16 if remarriage ==1
+{txt}(3,329 missing values generated)
+
+{com}. gen marage2 = Q02A if remarriage ==1
+{txt}(3,331 missing values generated)
+
+{com}. gen marspage2 = Q08A if remarriage ==1
+{txt}(3,332 missing values generated)
+
+{com}. 
+. /*離別年齢*/
+. gen divage = Q17_1A if Q17==1 | Q17==2
+{txt}(3,251 missing values generated)
+
+{com}. gen widage = Q17_2A if Q17==3 | Q17==2
+{txt}(3,162 missing values generated)
+
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   2.  Respondents information   <] */ 
+. /*----------------------------------------------------*/
+. gen redu = Q37
+{txt}
+{com}. 
+. /*出生年/出生コーホート*/
+. gen birth = 2002-Q32A2
+{txt}
+{com}. gen cohort = birth
+{txt}
+{com}. recode cohort 1921/1929=0 1930/1939 = 1 1940/1949=2 1950/1959=3 1960/1969=4 1970/1979=5 1980/1989=6 1990/1995=7
+{txt}(cohort: 3463 changes made)
+
+{com}. /*結婚年*/
+. gen maryear = marage1 + birth if marage1 ~=.
+{txt}(149 missing values generated)
+
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   3.  Recoding variables   <] */ 
+. /*----------------------------------------------------*/
+. recode maryear (1937/1949=0)(1950/1959=1)(1960/1969=2)(1970/1979=3)(1980/1989=4)(1990/1999=5)(2000/2010=6)(2011/2015=7),gen(marco)
+{txt}(3314 differences between maryear and marco)
+
+{com}. recode marco 0/3=1 4/6=2, gen(marco2)
+{txt}(2871 differences between marco and marco2)
+
+{com}. recode marco 0/2=1 3/4=2 5/6=3, gen(marco3)
+{txt}(2871 differences between marco and marco3)
+
+{com}. /*Educational assortative mating*/
+. gen redu4=redu
+{txt}
+{com}. gen spedu4=spedu1
+{txt}(144 missing values generated)
+
+{com}. recode redu spedu1 spedu2 (3/4=3) (9=5)
+{txt}(redu: 223 changes made)
+(spedu1: 862 changes made)
+(spedu2: 21 changes made)
+
+{com}. /*1"低学歴同類婚"2"高学歴同類婚"3"妻上昇婚"4"妻下降婚"*/
+. 
+. gen hom44=.
+{txt}(3,463 missing values generated)
+
+{com}. replace hom44 = 1 if redu4 == 1 & spedu4 == 1
+{txt}(564 real changes made)
+
+{com}. replace hom44 = 1 if redu4 == 2 & spedu4 == 2
+{txt}(961 real changes made)
+
+{com}. replace hom44 = 2 if redu4 == 3 & spedu4 == 3
+{txt}(78 real changes made)
+
+{com}. replace hom44 = 2 if redu4 == 4 & spedu4 == 4
+{txt}(187 real changes made)
+
+{com}. replace hom44 = 3 if redu4 < spedu4 & redu4 ~=. & spedu4 ~=. & spedu4 ~=5
+{txt}(1,053 real changes made)
+
+{com}. replace hom44 = 4 if redu4 > spedu4 & redu4 ~=. & spedu4 ~=.
+{txt}(476 real changes made)
+
+{com}. 
+.  
+. /*----------------------------------------------------*/
+.    /* [>   4.  Expand dataset   <] */ 
+. /*----------------------------------------------------*/
+. gen tf = age - marage1 + 1
+{txt}(149 missing values generated)
+
+{com}. expand tf
+{txt}(149 missing counts ignored; observations not deleted)
+(96,694 observations created)
+
+{com}. sort id 
+{txt}
+{com}. by id: gen length = marage1 + _n - 1 
+{txt}(149 missing values generated)
+
+{com}. gen lyear = length - marage1 + 1
+{txt}(149 missing values generated)
+
+{com}. 
+. drop if divage < length & divage~=.
+{txt}(3,600 observations deleted)
+
+{com}. recode spedu1 *=. if widage < length & widage~=.
+{txt}(spedu1: 3884 changes made)
+
+{com}. 
+.  
+. /*----------------------------------------------------*/
+.    /* [>   5.  Recoding in long dataset   <] */ 
+. /*----------------------------------------------------*/
+. gen div=0
+{txt}
+{com}. recode div 0=1 if divage==length
+{txt}(div: 356 changes made)
+
+{com}. gen year=maryear+lyear-1
+{txt}(147 missing values generated)
+
+{com}. /*子ども数*/
+. gen cnum=1 if year>Q24_1A2S & Q24_1A2S~=.
+{txt}(9,739 missing values generated)
+
+{com}. replace cnum=0 if cnum==. & Q24_1A2S~=0
+{txt}(9,739 real changes made)
+
+{com}. replace cnum=2 if year>Q24_1B2S & Q24_1B2S~=. & cnum==1
+{txt}(69,970 real changes made)
+
+{com}. replace cnum=3 if year>Q24_1C2S & Q24_1C2S~=. & cnum==2
+{txt}(27,753 real changes made)
+
+{com}. replace cnum=4 if year>Q24_1D2S & Q24_1D2S~=. & cnum==3
+{txt}(5,896 real changes made)
+
+{com}. replace cnum=5 if year>Q24_1E2S & Q24_1E2S~=. & cnum==4
+{txt}(1,025 real changes made)
+
+{com}. *父学歴（中学、高校、短大高専、大卒、わからない）
+. gen fedu =Q38 if Q38~=9
+{txt}(739 missing values generated)
+
+{com}. 
+.  
+. /*----------------------------------------------------*/
+.    /* [>   6.  Keeping variables for merge   <] */ 
+. /*----------------------------------------------------*/
+. keep div maryear lyear cnum fedu marage1 spedu1 redu redu4 spedu4 marco marco2 marco3 hom44 sex survey id
+{txt}
+{com}. rename spedu1 spedu
+{res}{txt}
+{com}. rename marage1 marage
+{res}{txt}
+{com}. 
+. 
+. save "SecondaryData/Edited/JSS-EAM-Divorce/NFR-S01.dta",replace
+{txt}file SecondaryData/Edited/JSS-EAM-Divorce/NFR-S01.dta saved
+
+{com}. 
+. /*------------------------------------ End of SECTION 1 -------------------------------*/
+. 
+. 
+{txt}end of do-file
+
+{com}. do "/Users/fumiyau/Documents/GitHub/EAM-Divorce/DoFiles/2.SSM2015.do"
+{txt}
+{com}. /**********************************************************************/
+. /*  SECTION 2:Data construction SSM                     
+>     Notes: */
+. /**********************************************************************/
+. 
+. /*----------------------------------------------------*/
+.    /* [>   1.  Winnowing   <] */ 
+. /*----------------------------------------------------*/
+. use "SSM/Rawdata/2015ssm_v050a0827.dta", clear
+{txt}
+{com}. drop id 
+{txt}
+{com}. gen id=_n+10000
+{txt}
+{com}. gen survey = 2015
+{txt}
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   2.  Marital status and spouses educational attainment   <] */ 
+. /*----------------------------------------------------*/
+. gen sex = q1_1
+{txt}
+{com}. gen age = q1_2_5
+{txt}
+{com}. gen marriage = q25
+{txt}
+{com}. /*現在の結婚：結婚時年齢・学歴*/
+. gen marage1 = q26 
+{txt}
+{com}. gen spedu1 = q30
+{txt}
+{com}. /*再婚の区別（1:初婚, 2:再婚, 8:非該当）*/
+. gen remarriage = q33
+{txt}
+{com}. 
+. /*離死別者の初婚相手の情報*/
+. gen spedu2 = q38
+{txt}
+{com}. gen marage2 = q34
+{txt}
+{com}. recode spedu1 8/99=.
+{txt}(spedu1: 2278 changes made)
+
+{com}. recode spedu2 8/99=.
+{txt}(spedu2: 6974 changes made)
+
+{com}. 
+. /*再婚者の初婚相手の情報*/
+. gen spedu3 = sq5
+{txt}
+{com}. gen marage3 = sq1
+{txt}
+{com}. recode spedu3 8/99=.
+{txt}(spedu3: 7620 changes made)
+
+{com}. gen spjob_re = sq4
+{txt}
+{com}. 
+. /*離死別年齢*/
+. gen divage = q41 if q25==3
+{txt}(7,392 missing values generated)
+
+{com}. replace divage = sq2_1 if sq2 == 1
+{txt}(195 real changes made)
+
+{com}. recode divage 99/999=.
+{txt}(divage: 14 changes made)
+
+{com}. 
+. gen widage = q41 if q25==3
+{txt}(7,392 missing values generated)
+
+{com}. replace widage = sq2_2 if sq2 == 2
+{txt}(13 real changes made)
+
+{com}. recode widage 99/999=.
+{txt}(widage: 14 changes made)
+
+{com}. 
+. /*q26とq34を組み合わせた本人初婚年齢（厳密には再婚者を除く必要あり）変数の作成*/
+. /*q28とq36を組み合わせた配偶者初婚年齢（厳密には再婚者を除く必要あり）変数の作成*/
+. /*配偶者年齢の男女反転はやや慎重な対応を要する（相手が初婚かわからないので）*/
+. /*本人初婚年齢は6485ケースが回答*/
+. recode marage1 888/999=. 99=.
+{txt}(marage1: 2217 changes made)
+
+{com}. recode marage2 888/999=. 99=.
+{txt}(marage2: 6933 changes made)
+
+{com}. recode marage3 888/999=. 99=. 88=.
+{txt}(marage3: 7608 changes made)
+
+{com}. 
+. gen marage = marage1
+{txt}(2,217 missing values generated)
+
+{com}. replace marage = marage2 if marage ==.
+{txt}(884 real changes made)
+
+{com}. replace marage = marage3 if remarriage == 2
+{txt}(210 real changes made, 4 to missing)
+
+{com}. recode marage 98=. 99=.
+{txt}(marage: 0 changes made)
+
+{com}. 
+. /*初婚相手の学歴*/
+. gen spedu = spedu1
+{txt}(2,278 missing values generated)
+
+{com}. replace spedu = spedu2 if spedu == .
+{txt}(843 real changes made)
+
+{com}. replace spedu = spedu3 if remarriage == 2
+{txt}(131 real changes made, 15 to missing)
+
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   2.  Respondents information   <] */ 
+. /*----------------------------------------------------*/
+. gen edssm = 0
+{txt}
+{com}. replace edssm = 88 if q18_4 == 0
+{txt}(7 real changes made)
+
+{com}. replace edssm = 4 if q18_4 == 1 & q18_5 == 0 & q18_9 == 0 & q18_8 == 0 & q18_10 == 0 & q18_11 == 0
+{txt}(1,003 real changes made)
+
+{com}. replace edssm = 5 if q18_5 == 1 & q18_9 == 0 & q18_8 == 0 & q18_10 == 0 & q18_11 == 0
+{txt}(4,171 real changes made)
+
+{com}. replace edssm = 9 if q18_9 == 1 & q18_8 == 0 & q18_10 == 0 & q18_11 == 0
+{txt}(34 real changes made)
+
+{com}. replace edssm = 8 if q18_8 == 1 & q18_10 == 0 & q18_11 == 0
+{txt}(658 real changes made)
+
+{com}. replace edssm = 10 if q18_10 == 1 & q18_11 == 0
+{txt}(1,767 real changes made)
+
+{com}. replace edssm = 11 if q18_11 == 1
+{txt}(177 real changes made)
+
+{com}. replace edssm = 99 if q18_99 == 1
+{txt}(1 real change made)
+
+{com}. replace edssm = 99 if q18_4 == 9  | q18_5 == 9 | q18_9 == 9 | q18_8 == 9 | q18_10 == 9 | q18_11 == 9
+{txt}(1 real change made)
+
+{com}. 
+. /*出生年/出生コーホート*/
+. gen birth = q1_2_1
+{txt}
+{com}. replace birth = 1925 + q1_2_3 if birth == 9999 & q1_2_2 == 1
+{txt}(4,694 real changes made)
+
+{com}. replace birth = 1989 + q1_2_3 if birth == 9999 & q1_2_2 == 2
+{txt}(246 real changes made)
+
+{com}. 
+. *結婚年
+. gen maryear = marage + birth if marage ~=.
+{txt}(1,331 missing values generated)
+
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   3.  Recoding variables   <] */ 
+. /*----------------------------------------------------*/
+. /*q25とq33を組み合わせた変数の作成*/
+. /*未婚1　初婚継続2 再婚3 離別4 死別5 7ケースが除外*/
+. /*6379/6498=98.2%の回答率*/
+. gen marsta = .
+{txt}(7,817 missing values generated)
+
+{com}. recode marsta . = 1 if marriage == 1 & remarriage == 8
+{txt}(marsta: 1312 changes made)
+
+{com}. recode marsta . = 2 if marriage == 2 & remarriage == 1
+{txt}(marsta: 5390 changes made)
+
+{com}. recode marsta . = 3 if marriage == 2 & remarriage == 2
+{txt}(marsta: 217 changes made)
+
+{com}. recode marsta . = 4 if marriage == 3 & remarriage == 8
+{txt}(marsta: 425 changes made)
+
+{com}. recode marsta . = 5 if marriage == 4 & remarriage == 8
+{txt}(marsta: 466 changes made)
+
+{com}. 
+. /*marstaを使ってmarflagを立てる。flagが立っていないのは生存と捉えるので、本人の現在の年齢を代入*/
+. gen marflag = marsta > 1
+{txt}
+{com}. gen surv = marage
+{txt}(1,331 missing values generated)
+
+{com}. replace surv = q1_2_5 if marflag == 0
+{txt}(1,312 real changes made)
+
+{com}. 
+. /*結婚可能年齢を基準として期間を算出*/
+. gen period = surv - 18 if q1_1 == 1
+{txt}(4,260 missing values generated)
+
+{com}. replace period = surv - 16 if q1_1 == 2
+{txt}(4,241 real changes made)
+
+{com}. recode period -1=.
+{txt}(period: 1 changes made)
+
+{com}. *結婚年コーホート
+. recode maryear (1949=0)(1950/1959=1)(1960/1969=2)(1970/1979=3)(1980/1989=4)(1990/1999=5)(2000/2010=6)(2011/2015=7),gen(marco)
+{txt}(6486 differences between maryear and marco)
+
+{com}. recode marco 0/3=1 4/7=2, gen(marco2)
+{txt}(6340 differences between marco and marco2)
+
+{com}. recode marco 0/2=1 3/4=2 5/7=3, gen(marco3)
+{txt}(6340 differences between marco and marco3)
+
+{com}. *spedu4: 1中学2高校3短大高専4大卒以上（専門は高卒）
+. recode spedu (4/5=4) (6=5) (7=6) (9/99=.)
+{txt}(spedu: 1616 changes made)
+
+{com}. recode spedu 3=2 4=3 5/6=4 .=5,gen(spedu4)
+{txt}(4230 differences between spedu and spedu4)
+
+{com}. recode spedu 3=2 4/6=3 .=5
+{txt}(spedu: 4230 changes made)
+
+{com}. 
+. gen redu = edssm
+{txt}
+{com}. recode redu 4=1 5=2 7/9=3 10/11=4 88/99=.,gen(redu4)
+{txt}(7817 differences between redu and redu4)
+
+{com}. recode redu 4=1 5=2 7/9=3 10/11=3 88/99=.
+{txt}(redu: 7817 changes made)
+
+{com}. 
+. drop if marriage == 1
+{txt}(1,312 observations deleted)
+
+{com}. drop if redu ==.
+{txt}(6 observations deleted)
+
+{com}. drop if marage ==. 
+{txt}(19 observations deleted)
+
+{com}. 
+. 
+. gen hom44=.
+{txt}(6,480 missing values generated)
+
+{com}. replace hom44 = 1 if redu4 == 1 & spedu4 == 1
+{txt}(481 real changes made)
+
+{com}. replace hom44 = 1 if redu4 == 2 & spedu4 == 2
+{txt}(2,358 real changes made)
+
+{com}. replace hom44 = 2 if redu4 == 3 & spedu4 == 3
+{txt}(43 real changes made)
+
+{com}. replace hom44 = 2 if redu4 == 4 & spedu4 == 4
+{txt}(685 real changes made)
+
+{com}. replace hom44 = 3 if redu4 < spedu4 & redu4 ~=. & spedu4 ~=. & spedu4 ~=5
+{txt}(1,482 real changes made)
+
+{com}. replace hom44 = 4 if redu4 > spedu4 & redu4 ~=. & spedu4 ~=.
+{txt}(1,315 real changes made)
+
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   4.  Expand dataset   <] */ 
+. /*----------------------------------------------------*/
+. 
+. gen tf = age - marage + 1
+{txt}
+{com}. expand tf
+{txt}(193,873 observations created)
+
+{com}. sort id 
+{txt}
+{com}. by id: gen length = marage + _n - 1 
+{txt}
+{com}. gen lyear = length - marage + 1
+{txt}
+{com}. 
+. drop if divage < length & divage~=.
+{txt}(11,011 observations deleted)
+
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   5.  Recoding in long dataset   <] */ 
+. /*----------------------------------------------------*/
+. gen div=0
+{txt}
+{com}. recode div 0=1 if divage==length
+{txt}(div: 602 changes made)
+
+{com}. 
+. recode spedu (*=.) if widage < length & widage~=.
+{txt}(spedu: 290 changes made)
+
+{com}. gen year=maryear+lyear-1
+{txt}
+{com}. 
+. *子ども数
+. forvalues i=1/4{c -(}
+{txt}  2{com}. gen cbirth`i' = dq13_`i'_2b+1925 if dq13_`i'_2a == 1
+{txt}  3{com}. replace cbirth`i' = dq13_`i'_2b+1989 if dq13_`i'_2a == 2
+{txt}  4{com}. {c )-}
+{txt}(51,341 missing values generated)
+(35,567 real changes made)
+(72,817 missing values generated)
+(35,623 real changes made)
+(152,166 missing values generated)
+(15,764 real changes made)
+(185,111 missing values generated)
+(3,032 real changes made)
+
+{com}. gen cnum=0 if dq12==0
+{txt}(181,242 missing values generated)
+
+{com}. replace cnum=1 if year>cbirth1 & cbirth1~=.
+{txt}(153,510 real changes made)
+
+{com}. replace cnum=0 if cnum==. & cbirth1~=.
+{txt}(20,058 real changes made)
+
+{com}. replace cnum=2 if year>cbirth2 & cbirth2~=. & cnum==1
+{txt}(122,943 real changes made)
+
+{com}. replace cnum=3 if year>cbirth3 & cbirth3~=. & cnum==2
+{txt}(38,562 real changes made)
+
+{com}. replace cnum=4 if year>cbirth4 & cbirth4~=. & cnum==3
+{txt}(4,653 real changes made)
+
+{com}. 
+. /*父学歴*/
+. gen fedu = q22_a
+{txt}
+{com}. recode fedu (1/2=1)(3=2)(4/5=3)(6/7=4)(8=1)(9=2)(10/11=3)(12/13=4)(14=.)(99/999=5)
+{txt}(fedu: 142542 changes made)
+
+{com}. 
+. keep maryear div lyear cnum fedu marage spedu redu redu4 spedu4 hom44 marco marco2 marco3 hom sex survey id
+{txt}
+{com}. append using "SecondaryData/Edited/JSS-EAM-Divorce/NFR-S01.dta"
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/Users/fumiyau/Documents/GitHub/EAM-Divorce/DoFiles/3.Analysis.do"
+{txt}
+{com}. 
+. /**********************************************************************/
+. /*  SECTION 3: Recoding integrated dataset                      
+>     Notes: */
+. /**********************************************************************/
+. 
+. cd "/Users/fumiyau/Documents/GitHub/EAM-Divorce/Results"
+{res}/Users/fumiyau/Documents/GitHub/EAM-Divorce/Results
+{txt}
+{com}. *分析を女性に限定
+. drop if sex == 1
+{txt}(81,663 observations deleted)
+
+{com}. drop if spedu4==5
+{txt}(2,270 observations deleted)
+
+{com}. *SSM2015では子ども数が5人までのため丸める
+. recode cnum 5=4
+{txt}(cnum: 1025 changes made)
+
+{com}. *結婚年齢ダミーの作成
+. recode marage 16/22=1 23/25=2 26/28=3 29/31=4 32/61=5, gen(marcat)
+{txt}(201584 differences between marage and marcat)
+
+{com}. *16歳以下は削除
+. drop if marage < 16
+{txt}(235 observations deleted)
+
+{com}. *ダミー変数作成
+. tabulate redu4,gen(redu4)
+
+  {txt}RECODE of {c |}
+       redu {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     55,622       27.57       27.57
+{txt}          2 {c |}{res}    107,636       53.36       80.93
+{txt}          3 {c |}{res}     24,739       12.26       93.19
+{txt}          4 {c |}{res}     13,734        6.81      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    201,731      100.00
+{txt}
+{com}. tabulate spedu4,gen(spedu4)
+
+  {txt}RECODE of {c |}
+      spedu {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     53,585       26.66       26.66
+{txt}          2 {c |}{res}     88,834       44.20       70.85
+{txt}          3 {c |}{res}      7,883        3.92       74.78
+{txt}          4 {c |}{res}     50,701       25.22      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    201,003      100.00
+{txt}
+{com}. *学歴4分類で上昇婚基準
+. tabulate hom44,gen(hom44)
+
+      {txt}hom44 {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     99,752       49.63       49.63
+{txt}          2 {c |}{res}     14,232        7.08       56.71
+{txt}          3 {c |}{res}     60,438       30.07       86.78
+{txt}          4 {c |}{res}     26,581       13.22      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    201,003      100.00
+{txt}
+{com}. tabulate redu,gen(redu3)
+
+       {txt}redu {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     55,622       27.57       27.57
+{txt}          2 {c |}{res}    107,636       53.36       80.93
+{txt}          3 {c |}{res}     38,473       19.07      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    201,731      100.00
+{txt}
+{com}. tabulate spedu,gen(spedu3)
+
+      {txt}spedu {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     51,501       26.15       26.15
+{txt}          2 {c |}{res}     87,618       44.49       70.64
+{txt}          3 {c |}{res}     57,824       29.36      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    196,943      100.00
+{txt}
+{com}. tabulate survey,gen(surveyd)
+
+     {txt}survey {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+       2002 {c |}{res}     96,322       47.75       47.75
+{txt}       2015 {c |}{res}    105,409       52.25      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    201,731      100.00
+{txt}
+{com}. tabulate marcat,gen(marcat)
+
+  {txt}RECODE of {c |}
+     marage {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     63,388       31.44       31.44
+{txt}          2 {c |}{res}     82,164       40.76       72.20
+{txt}          3 {c |}{res}     37,379       18.54       90.75
+{txt}          4 {c |}{res}     11,847        5.88       96.62
+{txt}          5 {c |}{res}      6,806        3.38      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    201,584      100.00
+{txt}
+{com}. *父高専卒がいないため統合
+. recode fedu 4=3 2=1
+{txt}(fedu: 55670 changes made)
+
+{com}. tabulate fedu,gen(fedu)
+
+       {txt}fedu {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}    138,825       69.15       69.15
+{txt}          3 {c |}{res}     25,450       12.68       81.82
+{txt}          5 {c |}{res}     36,494       18.18      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    200,769      100.00
+{txt}
+{com}. recode maryear (1937/1949=.)(1950/1964=1)(1965/1979=2)(1980/1994=3)(1995/2010=4)(2011/2015=.),gen(marcox)
+{txt}(201584 differences between maryear and marcox)
+
+{com}. tabulate marcox,gen(marcox)
+
+  {txt}RECODE of {c |}
+    maryear {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     56,124       29.21       29.21
+{txt}          2 {c |}{res}     84,683       44.07       73.28
+{txt}          3 {c |}{res}     38,896       20.24       93.53
+{txt}          4 {c |}{res}     12,440        6.47      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    192,143      100.00
+{txt}
+{com}. ***Sample restriction***
+. drop if marco==7 | marco==0
+{txt}(9,441 observations deleted)
+
+{com}. keep if marage<49 & lyear < 25
+{txt}(60,895 observations deleted)
+
+{com}. keep if marcox~=.
+{txt}(0 observations deleted)
+
+{com}. /*------------------------------------ End of SECTION 3 ------------------------------------*/
+. 
+. 
+. /**********************************************************************/
+. /*  SECTION 4: Labeling                         
+>     Notes: */
+. /**********************************************************************/
+. 
+. lab var div"離別イベント"
+{txt}
+{com}. lab var redu41"本人中学卒"
+{txt}
+{com}. lab var redu42"本人高校卒"
+{txt}
+{com}. lab var redu43"本人短大高専卒"
+{txt}
+{com}. lab var redu44"本人四大卒以上"
+{txt}
+{com}. lab var spedu41"配偶者中学卒"
+{txt}
+{com}. lab var spedu42"配偶者高校卒"
+{txt}
+{com}. lab var spedu43"配偶者短大高専卒"
+{txt}
+{com}. lab var spedu44"配偶者四大卒以上"
+{txt}
+{com}. lab var hom441"低学歴同類婚"
+{txt}
+{com}. lab var hom442"高学歴同類婚"
+{txt}
+{com}. lab var hom443"妻上昇婚"
+{txt}
+{com}. lab var hom444"妻下降婚"
+{txt}
+{com}. lab var marcat1"結婚年齢16-22歳"
+{txt}
+{com}. lab var marcat2"結婚年齢23-25歳"
+{txt}
+{com}. lab var marcat3"結婚年齢26-28歳"
+{txt}
+{com}. lab var marcat4"結婚年齢29-31歳"
+{txt}
+{com}. lab var marcat5"結婚年齢32歳以上"
+{txt}
+{com}. lab var surveyd2"2015年調査ダミー"
+{txt}
+{com}. lab var fedu1"父親高校卒以下"
+{txt}
+{com}. lab var fedu2"父親高等教育卒"
+{txt}
+{com}. lab var fedu3"父親最終学歴不明"
+{txt}
+{com}. lab var lyear"初婚からの経過年数（時変）"
+{txt}
+{com}. lab var marcox1"結婚年コーホート（1950-1964年）"
+{txt}
+{com}. lab var marcox2"結婚年コーホート（1965-1979年）"
+{txt}
+{com}. lab var marcox3"結婚年コーホート（1980-1994年）"
+{txt}
+{com}. lab var marcox4"結婚年コーホート（1995-2010年）"
+{txt}
+{com}. 
+. /*------------------------------------ End of SECTION 4 ------------------------------------*/
+. 
+. /**********************************************************************/
+. /*  SECTION 5: Results output                   
+>     Notes: */
+. /**********************************************************************/
+. 
+. 
+.  
+. /*----------------------------------------------------*/
+.    /* [>   1.  Table 1   <] */ 
+. /*----------------------------------------------------*/
+. keep id div redu4 spedu4 redu41 redu42 redu43 redu44 spedu41 spedu42 spedu43 spedu44 hom44 hom441 hom442 hom443 hom444 marcat1 marcat2 marcat3 marcat4 marcat5 surveyd2 fedu1 fedu2 fedu3 marage lyear marcox marcox1 marcox2 marcox3 marcox4 
+{txt}
+{com}. mark nomiss
+{txt}
+{com}. markout nomiss redu41 redu42 redu43 redu44 spedu41 spedu42 spedu43 spedu44 hom44 hom441 hom442 hom443 hom444 marcat1 marcat2 marcat3 marcat4 marcat5 surveyd2 fedu1 fedu2 fedu3 marage lyear marcox marcox1 marcox2 marcox3 marcox4
+{txt}
+{com}. drop if nomiss == 0
+{txt}(765 observations deleted)
+
+{com}. quietly estpost tabstat div redu41 redu42 redu43 redu44 spedu41 spedu42 spedu43 spedu44 hom441 hom442 hom443 hom444 marcat1 marcat2 marcat3 marcat4 marcat5 surveyd2 fedu1 fedu2 fedu3 marcox1 marcox2 marcox3 marcox4 lyear, statistics(mean sd max min) columns(statistics)
+{txt}
+{com}. quietly esttab . using "Descriptive/devsc.csv", replace cells("mean(fmt(3)) sd(fmt(3)) min max(fmt(3))") noobs nonote label
+{txt}
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   2.  Table 2   <] */ 
+. /*----------------------------------------------------*/
+. forvalues i=1/4{c -(}
+{txt}  2{com}. tabout redu4 spedu4 if lyear ==1 & marcox==`i' using "Bivariate/crosstabx`i'.txt",replace
+{txt}  3{com}. {c )-}
+{res}
+{txt}Table output written to: Bivariate/crosstabx1.txt
+
+{res}        RECODE of spedu                         
+RECODE of redu  1       2       3       4       Total
+        No.     No.     No.     No.     No.
+1       379.0   159.0   5.0     22.0    565.0
+2       109.0   282.0   41.0    107.0   539.0
+3       9.0     10.0    17.0    33.0    69.0
+4       0.0     2.0     0.0     15.0    17.0
+Total   497.0   453.0   63.0    177.0   1,190.0
+
+{txt}Table output written to: Bivariate/crosstabx2.txt
+
+{res}        RECODE of spedu                         
+RECODE of redu  1       2       3       4       Total
+        No.     No.     No.     No.     No.
+1       334.0   201.0   9.0     22.0    566.0
+2       233.0   845.0   41.0    279.0   1,398.0
+3       15.0    86.0    23.0    152.0   276.0
+4       1.0     12.0    2.0     131.0   146.0
+Total   583.0   1,144.0 75.0    584.0   2,386.0
+
+{txt}Table output written to: Bivariate/crosstabx3.txt
+
+{res}        RECODE of spedu                         
+RECODE of redu  1       2       3       4       Total
+        No.     No.     No.     No.     No.
+1       33.0    34.0    1.0     3.0     71.0
+2       83.0    677.0   60.0    272.0   1,092.0
+3       12.0    154.0   47.0    258.0   471.0
+4       2.0     25.0    5.0     199.0   231.0
+Total   130.0   890.0   113.0   732.0   1,865.0
+
+{txt}Table output written to: Bivariate/crosstabx4.txt
+
+{res}        RECODE of spedu                         
+RECODE of redu  1       2       3       4       Total
+        No.     No.     No.     No.     No.
+1       5.0     15.0    0.0     2.0     22.0
+2       38.0    365.0   25.0    141.0   569.0
+3       3.0     98.0    14.0    124.0   239.0
+4       3.0     50.0    8.0     195.0   256.0
+Total   49.0    528.0   47.0    462.0   1,086.0
+{txt}
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   3.  Figure 1   <] */ 
+. /*----------------------------------------------------*/
+. ta hom44 marcox if lyear == 1,col
+{txt}
+{c TLC}{hline 19}{c TRC}
+{c |} Key{col 21}{c |}
+{c LT}{hline 19}{c RT}
+{c |}{space 5}{it:frequency}{col 21}{c |}
+{c |}{space 1}{it:column percentage}{col 21}{c |}
+{c BLC}{hline 19}{c BRC}
+
+           {c |}              RECODE of maryear
+     hom44 {c |}         1          2          3          4 {c |}     Total
+{hline 11}{c +}{hline 44}{c +}{hline 10}
+         1 {c |}{res}       661      1,179        710        370 {txt}{c |}{res}     2,920 
+           {txt}{c |}{res}     55.55      49.41      38.07      34.07 {txt}{c |}{res}     44.74 
+{txt}{hline 11}{c +}{hline 44}{c +}{hline 10}
+         2 {c |}{res}        32        154        246        209 {txt}{c |}{res}       641 
+           {txt}{c |}{res}      2.69       6.45      13.19      19.24 {txt}{c |}{res}      9.82 
+{txt}{hline 11}{c +}{hline 44}{c +}{hline 10}
+         3 {c |}{res}       367        704        628        307 {txt}{c |}{res}     2,006 
+           {txt}{c |}{res}     30.84      29.51      33.67      28.27 {txt}{c |}{res}     30.73 
+{txt}{hline 11}{c +}{hline 44}{c +}{hline 10}
+         4 {c |}{res}       130        349        281        200 {txt}{c |}{res}       960 
+           {txt}{c |}{res}     10.92      14.63      15.07      18.42 {txt}{c |}{res}     14.71 
+{txt}{hline 11}{c +}{hline 44}{c +}{hline 10}
+     Total {c |}{res}     1,190      2,386      1,865      1,086 {txt}{c |}{res}     6,527 
+           {txt}{c |}{res}    100.00     100.00     100.00     100.00 {txt}{c |}{res}    100.00 
+
+{txt}
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   4.  Table 2   <] */ 
+. /*----------------------------------------------------*/
+. *記述的なグラフ
+. *イベントヒストリー・セット
+. stset lyear, failure(div==1) id(id)
+
+                {txt}id:  {res}id
+     {txt}failure event:  {res}div == 1
+{txt}obs. time interval:  {res}(lyear[_n-1], lyear]
+{txt} exit on or before:  {res}failure
+
+{txt}{hline 78}
+{res}    130,630{txt}  total observations
+{res}          0{txt}  exclusions
+{hline 78}
+{res}    130,630{txt}  observations remaining, representing
+{res}      6,527{txt}  subjects
+{res}        495{txt}  failures in single-failure-per-subject data
+{res}    130,630{txt}  total analysis time at risk and under observation
+                                                at risk from t = {res}        0
+                                     {txt}earliest observed entry t = {res}        0
+                                          {txt}last observed exit t = {res}       24
+{txt}
+{com}. rename hom44 assortative
+{res}{txt}
+{com}. sts graph if marage <49   & lyear <25, cumhaz by(marcox)ytitle("離婚経験率")title("結婚年コーホート")xtitle("初婚からの経過年数")legend(ring(0) position(10) cols(1) rows(4) order(1 2 3 4) label(1 "1950-1964年") label(2 "1965-1979年") label(3 "1980-1994年")  label(4 "1995-2010年")  ) saving(Fig/KMdivorceMarco.gph,replace) plot1opts(lcolor(gs5))plot4opts(lcolor(black)lpattern(dash_dot)) caption("出所：NFRJ-S01，SSM2015データより筆者推計",span)
+
+         {txt}failure _d:  {res}div == 1
+   {txt}analysis time _t:  {res}lyear
+                 {txt}id:  {res}id
+{txt}(file Fig/KMdivorceMarco.gph saved)
+{res}{txt}
+{com}. sts test marcox
+
+         {txt}failure _d:  {res}div == 1
+   {txt}analysis time _t:  {res}lyear
+                 {txt}id:  {res}id
+
+
+{txt}{title:Log-rank test for equality of survivor functions}
+
+{col 7} {c |}   Events         Events
+marcox {c |}  observed       expected
+{hline 7}{c +}{hline 25}
+1      {c |}{res}        45         101.52
+{txt}2      {c |}{res}       150         202.01
+{txt}3      {c |}{res}       189         136.23
+{txt}4      {c |}{res}       111          55.24
+{txt}{hline 7}{c +}{hline 25}
+Total  {c |}{res}       495         495.00
+
+             {txt}chi2(3) = {res}    126.15
+             {txt}Pr>chi2 = {res}    0.0000
+{txt}
+{com}. sts graph if marage <49   & lyear <25, cumhaz by(assortative)ytitle("　")title("学歴結合")xtitle("初婚からの経過年数")legend(ring(0) position(10) cols(1) rows(4) order(1 2 3 4) label(1 "高学歴同類婚") label(2 "低学歴同類婚") label(3 "妻上昇婚")  label(4 "妻下降婚")  ) saving(Fig/KMdivorceAssortative.gph,replace) plot1opts(lcolor(gs5))plot4opts(lcolor(black)lpattern(dash_dot)) caption("　",span)
+
+         {txt}failure _d:  {res}div == 1
+   {txt}analysis time _t:  {res}lyear
+                 {txt}id:  {res}id
+{txt}(file Fig/KMdivorceAssortative.gph saved)
+{res}{txt}
+{com}. sts test assortative
+
+         {txt}failure _d:  {res}div == 1
+   {txt}analysis time _t:  {res}lyear
+                 {txt}id:  {res}id
+
+
+{txt}{title:Log-rank test for equality of survivor functions}
+
+{col 12} {c |}   Events         Events
+assortative {c |}  observed       expected
+{hline 12}{c +}{hline 25}
+1           {c |}{res}       234         228.24
+{txt}2           {c |}{res}        34          44.07
+{txt}3           {c |}{res}       116         152.55
+{txt}4           {c |}{res}       111          70.13
+{txt}{hline 12}{c +}{hline 25}
+Total       {c |}{res}       495         495.00
+
+                  {txt}chi2(3) = {res}     35.17
+                  {txt}Pr>chi2 = {res}    0.0000
+{txt}
+{com}. graph combine "Fig/KMdivorceMarco.gph" "Fig/KMdivorceAssortative.gph", saving("Fig/KM-sex.gph",replace)
+{res}{txt}(file Fig/KM-sex.gph saved)
+
+{com}. graph export "Fig/KM-sex.pdf",replace
+{txt}(file /Users/fumiyau/Documents/GitHub/EAM-Divorce/Results/Fig/KM-sex.pdf written in PDF format)
+
+{com}. 
+. /*----------------------------------------------------*/
+.    /* [>   5.  Table 3   <] */ 
+. /*----------------------------------------------------*/
+. 
+. local vars1 "surveyd2 marcat2 marcat3 marcat4 marcat5 fedu2 fedu3 marcox1 marcox3 marcox4"
+{txt}
+{com}. local vars2 "redu41 redu42 redu43 spedu41 spedu42 spedu43"
+{txt}
+{com}. 
+. 
+. qui stcox hom444 `vars1'
+{txt}
+{com}. est sto ModelA1
+{txt}
+{com}. qui stcox hom444 `vars1' `vars2'
+{txt}
+{com}. est sto ModelA2
+{txt}
+{com}. qui stcox hom441 hom442 `vars1'
+{txt}
+{com}. est sto ModelB1
+{txt}
+{com}. qui stcox hom441 hom442 `vars1' `vars2'
+{txt}
+{com}. est sto ModelB2
+{txt}
+{com}. esttab ModelA1 ModelA2 ModelB1 ModelB2  using "Regression/Baseline.csv", se scalar(N chi2 df_m ll aic r2_p) star(# 0.1 * 0.05 ** 0.01 *** 0.001) b(3)  replace label  wide noomitted title(Determinants of second childbirth (left: adjusted right: observed))
+{res}{txt}(output written to {browse  `"Regression/Baseline.csv"'})
+
+{com}. 
+. 
+. /*----------------------------------------------------*/
+.    /* [>   6.  Figure 3   <] */ 
+. /*----------------------------------------------------*/
+. forvalues i=1/4{c -(}
+{txt}  2{com}. forvalues j=1/4{c -(}
+{txt}  3{com}. gen redu4`i'marco`j'=0
+{txt}  4{com}. gen spedu4`i'marco`j'=0
+{txt}  5{com}. replace redu4`i'marco`j'=1 if redu4==`i' & marcox==`j'
+{txt}  6{com}. replace spedu4`i'marco`j'=1 if spedu4==`i' & marcox==`j'
+{txt}  7{com}. {c )-}
+{txt}  8{com}. {c )-}
+{txt}(13,246 real changes made)
+(11,684 real changes made)
+(13,149 real changes made)
+(13,438 real changes made)
+(1,245 real changes made)
+(2,299 real changes made)
+(256 real changes made)
+(608 real changes made)
+(12,677 real changes made)
+(10,630 real changes made)
+(32,529 real changes made)
+(26,666 real changes made)
+(20,758 real changes made)
+(16,873 real changes made)
+(6,579 real changes made)
+(5,928 real changes made)
+(1,643 real changes made)
+(1,470 real changes made)
+(6,438 real changes made)
+(1,750 real changes made)
+(8,444 real changes made)
+(1,847 real changes made)
+(2,689 real changes made)
+(484 real changes made)
+(408 real changes made)
+(4,190 real changes made)
+(3,380 real changes made)
+(13,642 real changes made)
+(4,374 real changes made)
+(13,802 real changes made)
+(2,815 real changes made)
+(5,319 real changes made)
+
+{com}. order redu41marco1 redu41marco2 redu41marco3 redu41marco4 redu42marco1 redu42marco2 redu42marco3 redu42marco4 redu43marco1 redu43marco2 redu43marco3 redu43marco4 redu44marco1 redu44marco2 redu44marco3 redu44marco4
+{txt}
+{com}. order spedu41marco1 spedu41marco2 spedu41marco3 spedu41marco4 spedu42marco1 spedu42marco2 spedu42marco3 spedu42marco4 spedu43marco1 spedu43marco2 spedu43marco3 spedu43marco4 spedu44marco1 spedu44marco2 spedu44marco3 spedu44marco4
+{txt}
+{com}. 
+. ***If reference is marco == 2
+. qui stcox c.hom444##c.marcox1 c.hom444##c.marcox3 c.hom444##c.marcox4 surveyd2 marcat2 marcat3 marcat4 fedu2 fedu3 redu41 redu42 redu43 spedu41 spedu42 spedu43 redu41marco3 redu41marco4 redu42marco3 redu42marco4 redu43marco3 redu43marco4 spedu41marco1 spedu41marco3 spedu41marco4 spedu42marco1 spedu42marco3 spedu42marco4 spedu43marco1 spedu43marco3 spedu43marco4
+{txt}
+{com}. est sto Model1
+{txt}
+{com}. qui stcox c.hom441##c.marcox1 c.hom441##c.marcox3 c.hom441##c.marcox4 c.hom442##c.marcox3 c.hom442##c.marcox4 surveyd2 marcat2 marcat3 marcat4 fedu2 fedu3 redu41 redu42 redu43 spedu41 spedu42 spedu43 redu41marco3 redu41marco4 redu42marco3 redu42marco4 redu43marco3 redu43marco4 spedu41marco1 spedu41marco3 spedu41marco4 spedu42marco1 spedu42marco3 spedu42marco4 spedu43marco1 spedu43marco3 spedu43marco4
+{txt}
+{com}. est sto Model2
+{txt}
+{com}. esttab Model1 Model2 using "Regression/Interaction.csv", se scalar(N chi2 df_m ll aic r2_p) star(# 0.1 * 0.05 ** 0.01 *** 0.001) b(3)  replace label  wide noomitted title(Determinants of second childbirth (left: adjusted right: observed))
+{res}{txt}(output written to {browse  `"Regression/Interaction.csv"'})
+
+{com}. 
+. /*------------------------------------ End of SECTION 5 ------------------------------------*/
+. 
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. do "/Users/fumiyau/Documents/GitHub/EAM-Divorce/DoFiles/4.Prediction.do"
+{txt}
+{com}. 
+. 
+. /**********************************************************************/
+. /*  SECTION 6: Prediction                       
+>     Notes: */
+. /**********************************************************************/
+. import delimited "/Users/fumiyau/Documents/GitHub/EAM-Divorce/Results/Regression/Prediction.csv",clear
+{res}{text}(3 vars, 12 obs)
+
+{com}. forvalues i=1/3{c -(}
+{txt}  2{com}. qui reg score i.year  if type==`i'
+{txt}  3{com}. estpost margins year if type==`i'
+{txt}  4{com}. est sto model`i'
+{txt}  5{com}. {c )-}
+{res}
+{txt}Adjusted predictions{col 49}Number of obs{col 67}= {res}         4
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}     Margin{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}year {c |}
+{space 10}1  {c |}{col 14}{res}{space 2}    1.101{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{space 10}2  {c |}{col 14}{res}{space 2}     .971{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{space 10}3  {c |}{col 14}{res}{space 2}     .035{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{space 10}4  {c |}{col 14}{res}{space 2}    -.074{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Adjusted predictions{col 49}Number of obs{col 67}= {res}         3
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}     Margin{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}year {c |}
+{space 10}2  {c |}{col 14}{res}{space 2}   -1.027{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{space 10}3  {c |}{col 14}{res}{space 2}     .534{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{space 10}4  {c |}{col 14}{res}{space 2}     .253{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Adjusted predictions{col 49}Number of obs{col 67}= {res}         4
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}     Margin{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}year {c |}
+{space 10}1  {c |}{col 14}{res}{space 2}    -.396{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{space 10}2  {c |}{col 14}{res}{space 2}    -.551{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{space 10}3  {c |}{col 14}{res}{space 2}     -.15{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{space 10}4  {c |}{col 14}{res}{space 2}    -.057{col 26}{space 2}        .{col 37}{space 1}       .{col 46}{space 3}    .{col 54}{space 4}        .{col 67}{space 3}        .
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. label define yearl 1"1950-1964年"      2"1965-1979年" 3"1980-1994年" 4"1995-2010年",replace
+{txt}
+{com}. label values year yearl 
+{txt}
+{com}. 
+. *marker option : https://www.stata.com/manuals13/g-3marker_options.pdf#g-3marker_options
+. *line option : https://www.stata.com/manuals13/g-4linepatternstyle.pdf#g-4linepatternstyle
+. *http://www.bruunisejs.dk/StataHacks/Coding%20Stata/coefplot/estimates_into_Stata_matrix_and_using_coefplot/
+. generate lbl=""
+{txt}(12 missing values generated)
+
+{com}. coefplot (model1, label(妻下降婚（vsその他）) lcolor(gs3) lpattern(solid) recast(connected) msymbol(T) mcolor(gs3)) ///
+> (model2, label(高学歴同類婚（vs異類婚）) lcolor(gs3) lpattern(solid) recast(connected) msymbol(O) mcolor(gs3)) ///
+> (model3, label(低学歴同類婚（vs異類婚）) lcolor(gs3) lpattern(solid) recast(connected) msymbol(Oh) mcolor(gs3))  ///
+> , generate mlabel(lbl) mlabpos(12) vert offset(0) noci scheme(s1mono) legend(row(2) size(small) rowgap(small))  ///
+> ylabel(-1.25(0.5)1.25, nogrid) xlabel(,nogrid) ytitle(係数) xtitle(結婚年コーホート) yline(0, lpattern(dash)lcolor(gray))  ///
+> note("出所：NFRJ-S01・SSM2015データより筆者推計" "注1：下降婚モデルと同類婚モデルにおける基準カテゴリーは異なる．""注2：低学歴同類婚の1995-2010年の係数は-.057") ///
+> saving(Fig/g1,replace)
+{res}{txt}(file Fig/g1.gph saved)
+
+Generated variables:
+              storage   display    value
+variable name   type    format     label      variable label
+{hline}
+{p 0 48}{res}{bind:__by           }{txt}{bind: byte    }{bind:{txt}%9.0g     }{space 1}{bind:__by     }{bind:  }{res}{res}subgraph ID{p_end}
+{p 0 48}{bind:__plot         }{txt}{bind: byte    }{bind:{txt}%9.0g     }{space 1}{bind:__plot   }{bind:  }{res}{res}plot ID{p_end}
+{p 0 48}{bind:__at           }{txt}{bind: byte    }{bind:{txt}%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}plot position (category axis){p_end}
+{p 0 48}{bind:__mlbl         }{txt}{bind: str1    }{bind:{txt}%9s       }{space 1}{bind:         }{bind:  }{res}{res}marker label{p_end}
+{p 0 48}{bind:__mlpos        }{txt}{bind: byte    }{bind:{txt}%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}marker label position{p_end}
+{p 0 48}{bind:__b            }{txt}{bind: float   }{bind:{txt}%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}coefficient{p_end}
+{p 0 48}{bind:__V            }{txt}{bind: float   }{bind:{txt}%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}variance{p_end}
+{p 0 48}{bind:__se           }{txt}{bind: float   }{bind:{txt}%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}standard error{p_end}
+{p 0 48}{bind:__t            }{txt}{bind: float   }{bind:{txt}%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}t or z statistic{p_end}
+{p 0 48}{bind:__df           }{txt}{bind: byte    }{bind:{txt}%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}degrees of freedom{p_end}
+{p 0 48}{bind:__pval         }{txt}{bind: float   }{bind:{txt}%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}p-value{p_end}
+{txt}
+{com}. replace lbl=string(__b)
+{txt}variable {bf}lbl{sf} was {bf}{res}str1{sf}{txt} now {bf}{res}str6{sf}
+{txt}(12 real changes made)
+
+{com}. replace lbl="." if lbl=="-.057"
+{txt}(1 real change made)
+
+{com}. `r(graph)'
+{res}{txt}(file Fig/g1.gph saved)
+
+{com}. graph export /Users/fumiyau/Documents/GitHub/EAM-Divorce/Results/Fig/Prediction.pdf,replace 
+{txt}(file /Users/fumiyau/Documents/GitHub/EAM-Divorce/Results/Fig/Prediction.pdf written in PDF format)
+
+{com}. 
+. 
+. 
+. 
+. 
+. /*------------------------------------ End of SECTION 6 ------------------------------------*/
+. 
+{txt}end of do-file
+
+{com}. log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}/Users/fumiyau/Documents/GitHub/EAM-Divorce/Log/JSS_EAMDivorce31Oct2018.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res}31 Oct 2018, 20:27:38
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}
