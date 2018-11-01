@@ -7,9 +7,13 @@ There are 4 do files (+master fofile) to run the replication.
 
 
 0.MasterDofile - a do file that runs other do files
+
 1.NFR-S01 - a do file that creates NFR-S01 dataset for analysis 
+
 2.SSM2015 - a do file that creates SSM2015 dataset for analysis 
+
 3.Analysis.do - a do file that submits descriptive statistics and regression results
+
 4.Prediction - a do file that creates figure 3 
 
 Output files are included in the Results folder.
